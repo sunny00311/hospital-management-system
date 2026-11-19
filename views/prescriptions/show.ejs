@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — Hospital Management System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; min-height: 100vh; }
+    .main-nav { background: white; border-bottom: 1px solid #e2e8f0; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand a { font-weight: 700; font-size: 1.25rem; color: #1a1a2e; text-decoration: none; }
+    .nav-links { display: flex; gap: 8px; list-style: none; }
+    .nav-links a { padding: 8px 16px; border-radius: 6px; color: #475569; text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+    .nav-links a:hover { background: #f1f5f9; color: #1e293b; }
+    .nav-user { display: flex; align-items: center; gap: 16px; }
+    .user-name { font-size: 0.85rem; color: #64748b; }
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .container { max-width: 800px; margin: 0 auto; padding: 24px; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 600; color: #1e293b; }
+    .card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 24px; }
+    .card-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #1e293b; }
+    .card-body { padding: 20px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .detail-label { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+    .detail-value { font-size: 0.95rem; color: #1e293b; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { padding: 12px 16px; text-align: left; font-size: 0.85rem; border-bottom: 1px solid #f1f5f9; }
+    .table th { background: #f8fafc; font-weight: 600; color: #475569; font-size: 0.75rem; text-transform: uppercase; }
+    .table tr:last-child td { border-bottom: none; }
+    .status-badge { display: inline-block; padding: 4px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+    .status-active { background: #dbeafe; color: #1e40af; }
+    .status-dispensed { background: #dcfce7; color: #166534; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
+    .flash { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 0.9rem; }
+    .flash-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .flash-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .form-inline { display: inline; }
+  </style>
+</head>
+<body>
+  <nav class="main-nav">
+    <div class="nav-brand"><a href="/dashboard">Hospital Management System</a></div>
+    <ul class="nav-links">
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/patients">Patients</a></li>
+      <li><a href="/appointments">Appointments</a></li>
+      <li><a href="/doctors">Doctors</a></li>
+      <li><a href="/departments">Departments</a></li>
+      <li><a href="/medicines">Medicines</a></li>
+      <li><a href="/billing">Billing</a></li>
+      <li><a href="/payments">Payments</a></li>
+      <li><a href="/reports">Reports</a></li>
+    </ul>
+    <div class="nav-user">
+      <span class="user-name"><%= user.full_name %> (<%= user.role %>)</span>
+      <form action="/logout" method="POST" style="display:inline">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-secondary">Logout</button>
+      </form>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1><%= title %></h1>
+      <div style="display: flex; gap: 12px;">
+        <form class="form-inline" method="POST" action="/prescriptions/<%= prescription.prescription_id %>/dispense">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-primary" <%= prescription.status === 'Dispensed' || prescription.status === 'Cancelled' ? 'disabled' : '' %>>Dispense</button>
+        </form>
+        <a href="/medical-records/<%= prescription.record_id %>" class="btn btn-secondary">Back</a>
+      </div>
+    </div>
+
+    <% if (flash && (flash.success?.length || flash.error?.length)) { %>
+      <% flash.success?.forEach(function(msg) { %>
+        <div class="flash flash-success"><%= msg %></div>
+      <% }) %>
+      <% flash.error?.forEach(function(msg) { %>
+        <div class="flash flash-error"><%= msg %></div>
+      <% }) %>
+    <% } %>
+
+    <div class="card">
+      <div class="card-header">Prescription Details</div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div>
+            <div class="detail-label">Prescription ID</div>
+            <div class="detail-value"><%= prescription.prescription_id %></div>
+          </div>
+          <div>
+            <div class="detail-label">Patient</div>
+            <div class="detail-value"><%= prescription.patient_name %></div>
+          </div>
+          <div>
+            <div class="detail-label">Doctor</div>
+            <div class="detail-value"><%= prescription.doctor_name %></div>
+          </div>
+          <div>
+            <div class="detail-label">Date</div>
+            <div class="detail-value"><%= new Date(prescription.prescribed_at).toLocaleString() %></div>
+          </div>
+          <div>
+            <div class="detail-label">Status</div>
+            <div class="detail-value"><span class="status-badge status-<%= prescription.status.toLowerCase() %>"><%= prescription.status %></span></div>
+          </div>
+          <div>
+            <div class="detail-label">Notes</div>
+            <div class="detail-value"><%= prescription.notes || '-' %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Medicines</div>
+      <div class="card-body">
+        <% if (prescription.items && prescription.items.length > 0) { %>
+          <table class="table">
+            <thead>
+              <tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration (days)</th><th>Quantity</th><th>Instructions</th></tr>
+            </thead>
+            <tbody>
+              <% prescription.items.forEach(function(item) { %>
+                <tr>
+                  <td><%= item.medicine_name %></td>
+                  <td><%= item.dosage %></td>
+                  <td><%= item.frequency %></td>
+                  <td><%= item.duration_days %></td>
+                  <td><%= item.quantity %></td>
+                  <td><%= item.instructions || '-' %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } else { %>
+          <div style="text-align: center; padding: 32px; color: #94a3b8;">No medicines in this prescription</div>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (prescription.dispensing) { %>
+      <div class="card">
+        <div class="card-header">Dispensing Record</div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div>
+              <div class="detail-label">Dispensed At</div>
+              <div class="detail-value"><%= new Date(prescription.dispensing.dispensed_at).toLocaleString() %></div>
+            </div>
+            <div>
+              <div class="detail-label">Dispensed By</div>
+              <div class="detail-value"><%= prescription.dispensing.dispensed_by_name || '-' %></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>

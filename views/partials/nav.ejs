@@ -1,0 +1,27 @@
+<nav class="main-nav">
+  <div class="nav-brand">
+    <a href="/dashboard">Hospital Management System</a>
+  </div>
+  <ul class="nav-links">
+    <% if (user) { %>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/patients">Patients</a></li>
+      <li><a href="/appointments">Appointments</a></li>
+      <li><a href="/doctors">Doctors</a></li>
+      <li><a href="/departments">Departments</a></li>
+      <li><a href="/medicines">Medicines</a></li>
+      <li><a href="/billing">Billing</a></li>
+      <li><a href="/payments">Payments</a></li>
+      <li><a href="/reports">Reports</a></li>
+    <% } %>
+  </ul>
+  <div class="nav-user">
+    <% if (user) { %>
+      <span class="user-name"><%= user.full_name %> (<%= user.role %>)</span>
+      <form action="/logout" method="POST" style="display:inline">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-secondary">Logout</button>
+      </form>
+    <% } %>
+  </div>
+</nav>

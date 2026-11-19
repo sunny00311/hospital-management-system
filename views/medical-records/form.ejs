@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — Hospital Management System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; min-height: 100vh; }
+    .main-nav { background: white; border-bottom: 1px solid #e2e8f0; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand a { font-weight: 700; font-size: 1.25rem; color: #1a1a2e; text-decoration: none; }
+    .nav-links { display: flex; gap: 8px; list-style: none; }
+    .nav-links a { padding: 8px 16px; border-radius: 6px; color: #475569; text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+    .nav-links a:hover { background: #f1f5f9; color: #1e293b; }
+    .nav-user { display: flex; align-items: center; gap: 16px; }
+    .user-name { font-size: 0.85rem; color: #64748b; }
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .container { max-width: 800px; margin: 0 auto; padding: 24px; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 600; color: #1e293b; }
+    .form-card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; padding: 32px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 500; margin-bottom: 6px; color: #333; font-size: 0.9rem; }
+    .required::after { content: ' *'; color: #ef4444; }
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .error-message { color: #ef4444; font-size: 0.8rem; margin-top: 4px; }
+    textarea.error { border-color: #ef4444; }
+    .form-actions { display: flex; gap: 12px; margin-top: 24px; padding-top: 24px; border-top: 1px solid #e2e8f0; }
+    .flash { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 0.9rem; }
+    .flash-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .flash-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .appointment-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; margin-bottom: 24px; }
+    .appointment-info h3 { font-size: 1rem; font-weight: 600; color: #1e293b; margin-bottom: 8px; }
+    .appointment-info p { font-size: 0.9rem; color: #475569; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <nav class="main-nav">
+    <div class="nav-brand"><a href="/dashboard">Hospital Management System</a></div>
+    <ul class="nav-links">
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/patients">Patients</a></li>
+      <li><a href="/appointments">Appointments</a></li>
+      <li><a href="/doctors">Doctors</a></li>
+      <li><a href="/departments">Departments</a></li>
+      <li><a href="/medicines">Medicines</a></li>
+      <li><a href="/billing">Billing</a></li>
+      <li><a href="/payments">Payments</a></li>
+      <li><a href="/reports">Reports</a></li>
+    </ul>
+    <div class="nav-user">
+      <span class="user-name"><%= user.full_name %> (<%= user.role %>)</span>
+      <form action="/logout" method="POST" style="display:inline">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-secondary">Logout</button>
+      </form>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1><%= title %></h1>
+    </div>
+
+    <% if (flash && (flash.success?.length || flash.error?.length)) { %>
+      <% flash.success?.forEach(function(msg) { %>
+        <div class="flash flash-success"><%= msg %></div>
+      <% }) %>
+      <% flash.error?.forEach(function(msg) { %>
+        <div class="flash flash-error"><%= msg %></div>
+      <% }) %>
+    <% } %>
+
+    <% if (appointment) { %>
+      <div class="appointment-info">
+        <h3>Appointment Details</h3>
+        <p><strong>Patient:</strong> <%= appointment.patient_name %></p>
+        <p><strong>Doctor:</strong> <%= appointment.doctor_name %></p>
+        <p><strong>Date:</strong> <%= new Date(appointment.appointment_at).toLocaleString() %></p>
+        <p><strong>Reason:</strong> <%= appointment.reason || '-' %></p>
+      </div>
+    <% } %>
+
+    <div class="form-card">
+      <form method="POST" action="/appointments/<%= appointment?.appointment_id %>/medical-record">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="form-group">
+          <label class="required">Diagnosis</label>
+          <textarea name="diagnosis" rows="6" required maxlength="65535"
+            <%= errors?.diagnosis ? 'class="error"' : '' %>><%= record?.diagnosis || '' %></textarea>
+          <% if (errors?.diagnosis) { %><div class="error-message"><%= errors.diagnosis %></div><% } %>
+        </div>
+
+        <div class="form-group">
+          <label>Treatment</label>
+          <textarea name="treatment" rows="6" maxlength="65535"
+            <%= errors?.treatment ? 'class="error"' : '' %>><%= record?.treatment || '' %></textarea>
+          <% if (errors?.treatment) { %><div class="error-message"><%= errors.treatment %></div><% } %>
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea name="notes" rows="4" maxlength="65535"
+            <%= errors?.notes ? 'class="error"' : '' %>><%= record?.notes || '' %></textarea>
+          <% if (errors?.notes) { %><div class="error-message"><%= errors.notes %></div><% } %>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary"><%= record ? 'Update Medical Record' : 'Create Medical Record' %></button>
+          <a href="/appointments/<%= appointment?.appointment_id %>" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
